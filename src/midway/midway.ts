@@ -8,6 +8,7 @@ import {
   drawBunting,
   drawCloud,
   drawFloaters,
+  drawHotAirBalloon,
   drawFrontHedge,
   drawField,
   drawGroundLayer,
@@ -280,6 +281,12 @@ export function startMidway(canvas: HTMLCanvasElement, options: MidwayOptions): 
       const y = HORIZON - camera.y - 50 - cloud.y * 100;
       drawCloud(ctx, x, y, cloud.size);
     }
+    // A red hot air balloon, drifting a little slower than the clouds, low
+    // enough that its top stays on screen.
+    const balloonX =
+      ((((0.35 * span - camera.x * 0.2 + (calm ? 0 : t * 2.5)) % span) + span) % span) - 100;
+    const balloonY = Math.max(HORIZON - camera.y - 70, 22);
+    drawHotAirBalloon(ctx, balloonX, balloonY, 1, calm ? 0 : t);
 
     // Snap the camera to whole device pixels so the pre-drawn ground stays crisp.
     const k = dpr * zoom;
