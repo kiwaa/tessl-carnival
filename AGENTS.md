@@ -28,7 +28,8 @@ fork, not to everyone who forks this repository.
   `src/screenshots.browser.test.ts` runs in headless Chromium through Vitest's
   browser mode and Playwright. It needs system packages the cloud machine
   doesn't have, so it stays out of `npm run check` and runs in CI on pull
-  requests, which links the screenshots on the pull request.
+  requests, which shows the screenshots as images in a comment on the pull
+  request. The images are kept on the `pr-screenshots` branch.
 - Scores live in the browser (local storage) behind `src/carnival/scores.ts`.
 - No native dependencies, and nothing that needs `sudo`. `npm ci` is the whole setup.
 
