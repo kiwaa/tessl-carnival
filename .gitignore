@@ -6,3 +6,6 @@ coverage/
 
 # Local preview config
 .claude/launch.json
+
+# Written by npm run test:browser
+screenshots/

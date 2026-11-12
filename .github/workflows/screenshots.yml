@@ -1,0 +1,38 @@
+name: Screenshots
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+      # A pull request from another fork gets a read-only token, so it can't
+      # comment. Its screenshots are still on the run.
+      - name: Link the screenshots on the pull request
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none \
+            --body "Screenshots of the midway and the games for $SHA: [download them]($URL)."
