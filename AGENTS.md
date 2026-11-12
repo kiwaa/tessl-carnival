@@ -24,22 +24,29 @@ fork, not to everyone who forks this repository.
 ## Stack
 
 - TypeScript, Vite and plain HTML canvas. No UI framework.
-- Vitest for game logic. No browser tests: they need system packages the cloud
-  machine doesn't have.
+- Vitest for game logic. Screenshots only for the browser:
+  `src/screenshots.browser.test.ts` runs in headless Chromium through Vitest's
+  browser mode and Playwright. It needs system packages the cloud machine
+  doesn't have, so it stays out of `npm run check` and runs in CI on pull
+  requests, which shows the screenshots as images in a comment on the pull
+  request. The images are kept on the `pr-screenshots` branch.
 - Scores live in the browser (local storage) behind `src/carnival/scores.ts`.
 - No native dependencies, and nothing that needs `sudo`. `npm ci` is the whole setup.
 
 ## Commands
 
-| Command          | What it does                                              |
-| ---------------- | --------------------------------------------------------- |
-| `npm ci`         | Install dependencies                                      |
-| `npm run dev`    | Run the carnival at localhost:5173                        |
-| `npm run format` | Format the repo with Prettier, skipping `.prettierignore` |
-| `npm run check`  | Lint, check formatting, type-check and test everything    |
-| `npm run build`  | Build the site into `dist/`                               |
+| Command                | What it does                                              |
+| ---------------------- | --------------------------------------------------------- |
+| `npm ci`               | Install dependencies                                      |
+| `npm run dev`          | Run the carnival at localhost:5173                        |
+| `npm run format`       | Format the repo with Prettier, skipping `.prettierignore` |
+| `npm run check`        | Lint, check formatting, type-check and test everything    |
+| `npm run build`        | Build the site into `dist/`                               |
+| `npm run test:browser` | Screenshot the midway and games into `screenshots/`       |
 
 Run `npm run check` before you finish any change. CI runs the same command.
+`npm run test:browser` needs Chromium first: `npx playwright install --with-deps
+chromium`. You don't need to run it before you finish: CI does.
 
 Every change reaches `main` through a pull request, and CI must pass before it
 merges. Nobody pushes to `main` directly.
