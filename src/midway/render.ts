@@ -1708,6 +1708,58 @@ export function drawCloud(ctx: Ctx, x: number, y: number, size: number) {
   ctx.fill();
 }
 
+/** A red hot air balloon, `x`, `y` at the middle of its envelope, bobbing gently with `t`. */
+export function drawHotAirBalloon(ctx: Ctx, x: number, y: number, size: number, t: number) {
+  const r = 16 * size;
+  const cy = y + Math.sin(t * 0.8) * 3 * size;
+  const neck = cy + r * 1.35;
+  const basketTop = neck + 9 * size;
+  const envelope = () => {
+    ctx.beginPath();
+    ctx.arc(x, cy, r, Math.PI * 0.85, Math.PI * 0.15);
+    ctx.quadraticCurveTo(x + r * 0.6, cy + r, x + r * 0.3, neck);
+    ctx.lineTo(x - r * 0.3, neck);
+    ctx.quadraticCurveTo(x - r * 0.6, cy + r, x - r * Math.cos(Math.PI * 0.15), cy + r * 0.45);
+    ctx.closePath();
+  };
+
+  // The envelope: red, with darker gores and a cream band round its middle.
+  ctx.save();
+  envelope();
+  ctx.fillStyle = palette.red;
+  ctx.fill();
+  ctx.clip();
+  for (const gore of [-0.55, 0.55]) {
+    ctx.beginPath();
+    ctx.ellipse(x + gore * r, cy + r * 0.1, r * 0.18, r * 1.4, 0, 0, Math.PI * 2);
+    ctx.fillStyle = palette.redShade;
+    ctx.fill();
+  }
+  ctx.fillStyle = palette.cream;
+  ctx.fillRect(x - r, cy + r * 0.35, r * 2, r * 0.22);
+  ctx.restore();
+  oval(ctx, x - r * 0.4, cy - r * 0.45, r * 0.18, r * 0.28, 'rgba(255,255,255,0.45)');
+
+  // Ropes down to the basket.
+  for (const side of [-1, 1]) {
+    stroke(
+      ctx,
+      [
+        [x + side * r * 0.3, neck],
+        [x + side * r * 0.32, basketTop],
+      ],
+      palette.woodDark,
+      0.8,
+    );
+  }
+
+  // The wicker basket.
+  ctx.fillStyle = palette.wood;
+  ctx.fillRect(x - r * 0.38, basketTop, r * 0.76, 7 * size);
+  ctx.fillStyle = palette.woodLight;
+  ctx.fillRect(x - r * 0.42, basketTop, r * 0.84, 2 * size);
+}
+
 export interface Floater {
   x: number;
   y: number;
