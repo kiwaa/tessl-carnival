@@ -1,0 +1,74 @@
+name: Screenshots
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+      # A comment can't carry an upload, so the images go on the pr-screenshots
+      # branch and the comment shows them from there. A pull request from
+      # another fork gets a read-only token, so it can't push or comment. Its
+      # screenshots are still on the run.
+      - name: Show the screenshots on the pull request
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          dir="pr-$PR/$SHA"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch --depth 1 origin pr-screenshots; then
+            git worktree add store FETCH_HEAD
+          else
+            git worktree add --orphan -b pr-screenshots store
+          fi
+          mkdir -p "store/$dir"
+          cp screenshots/*.png "store/$dir/"
+          git -C store add "$dir"
+          git -C store commit -m "Screenshots for #$PR at $SHA"
+          # Another pull request's run may push first: replay onto it and retry.
+          for try in 1 2 3; do
+            git -C store push origin HEAD:refs/heads/pr-screenshots && break
+            [ "$try" = 3 ] && exit 1
+            git -C store fetch --depth 1 origin pr-screenshots
+            git -C store reset FETCH_HEAD
+            git -C store add "$dir"
+            git -C store commit -m "Screenshots for #$PR at $SHA"
+          done
+          commit=$(git -C store rev-parse HEAD)
+          {
+            echo "Screenshots of the midway and the games for $SHA:"
+            for file in screenshots/*.png; do
+              name=$(basename "$file" .png)
+              echo
+              echo "**$name**"
+              echo
+              echo "![$name](https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$commit/$dir/$name.png)"
+            done
+            echo
+            echo "[Download them]($URL)."
+          } > comment.md
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --create-if-none \
+            --body-file comment.md
